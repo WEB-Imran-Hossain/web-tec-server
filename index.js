@@ -51,6 +51,7 @@ async function run() {
 
     // data collection form server
     const featuredCollection = client.db("webtecDb").collection("featured");
+    const reviewsCollection = client.db("webtecDb").collection("reviews");
     const userCollection = client.db("webtecDb").collection("allUsers");
 
     // JWT related API
@@ -115,19 +116,18 @@ async function run() {
       res.send(result);
     });
 
-
-// updated upvoted related api
-app.put("/upVotes/:id", async(req, res)=>{
-  const id = req.params.id;
-      const filter = { _id : new ObjectId(id)};
+    // updated upvoted related api
+    app.put("/upVotes/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
       const options = { upsert: true };
-      const updatedDoc=req.body
-      const updatedVotes={
-        $set:{
+      const updatedDoc = req.body;
+      const updatedVotes = {
+        $set: {
           votes: updatedDoc.updatedVoteCount,
-          votedBy: updatedDoc.votedBy
-        }
-      }
+          votedBy: updatedDoc.votedBy,
+        },
+      };
 
       const result = await featuredCollection.updateOne(
         filter,
@@ -135,11 +135,14 @@ app.put("/upVotes/:id", async(req, res)=>{
         options
       );
       res.send(result);
-})
+    });
 
-
-
-
+    // reviews related api
+    app.post("/reviews", async (req, res) => {
+      const reviewData = req.body;
+      const result = await reviewsCollection.insertOne(reviewData);
+      res.send(result)
+    });
 
     // Users related api
     app.post("/allUsers", async (req, res) => {
