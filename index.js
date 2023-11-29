@@ -52,6 +52,7 @@ async function run() {
     // data collection form server
     const featuredCollection = client.db("webtecDb").collection("featured");
     const reviewsCollection = client.db("webtecDb").collection("reviews");
+    const reportsCollection = client.db("webtecDb").collection("reports");
     const userCollection = client.db("webtecDb").collection("allUsers");
 
     // JWT related API
@@ -141,7 +142,21 @@ async function run() {
     app.post("/reviews", async (req, res) => {
       const reviewData = req.body;
       const result = await reviewsCollection.insertOne(reviewData);
-      res.send(result)
+      res.send(result);
+    });
+
+    app.get("/reviews", async (req, res) => {
+      const reviewData = req.body;
+      const result = await reviewsCollection.find(reviewData).toArray();
+      res.send(result);
+    });
+
+
+    // report related api
+    app.post("/reports", async (req, res) => {
+      const reportData = req.body;
+      const result = await reportsCollection.insertOne(reportData);
+      res.send(result);
     });
 
     // Users related api
