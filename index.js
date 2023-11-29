@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 require("dotenv").config();
@@ -10,10 +10,11 @@ const port = process.env.PORT || 5000;
 // middleware
 app.use(
   cors({
-    origin: ["http://localhost:5000"],
+    origin: ["http://localhost:5173"],
     credentials: true,
   })
 );
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -47,8 +48,110 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
+
     // data collection form server
-    const productsCollection = client.db("webtecDb").collection("products");
+    const featuredCollection = client.db("webtecDb").collection("featured");
+    const userCollection = client.db("webtecDb").collection("allUsers");
+
+    // JWT related API
+    app.post("/jwt", async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.TOKEN, {
+        expiresIn: "1h",
+      });
+
+      res
+        .cookie("token", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+        })
+        .send({ auth: true });
+    });
+
+    // Clear cokkie API
+    app.post("/logout", async (req, res) => {
+      const user = req.body;
+      res
+        .clearCookie("token", { maxAge: 0, secure: true, sameSite: "none" })
+        .send({ clear: true });
+    });
+
+    // Featured api collection get
+    app.get("/featured", async (req, res) => {
+      const cursor = featuredCollection.find().sort({ timestamp: -1 });
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    app.patch("/featured/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const identifier = req.body;
+      const updatedData = {
+        $set: {
+          status: identifier.status,
+        },
+      };
+      const result = await featuredCollection.updateOne(filter, updatedData);
+      res.send(result);
+    });
+
+    app.get("/featured/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const options = {
+        projection: {
+          productImage: 1,
+          productName: 1,
+          tags: 1,
+          timestamp: 1,
+          votes: 1,
+          isOwner: 1,
+        },
+      };
+
+      const result = await featuredCollection.findOne(query);
+      res.send(result);
+    });
+
+
+// updated upvoted related api
+app.put("/upVotes/:id", async(req, res)=>{
+  const id = req.params.id;
+      const filter = { _id : new ObjectId(id)};
+      const options = { upsert: true };
+      const updatedDoc=req.body
+      const updatedVotes={
+        $set:{
+          votes: updatedDoc.updatedVoteCount,
+          votedBy: updatedDoc.votedBy
+        }
+      }
+
+      const result = await featuredCollection.updateOne(
+        filter,
+        updatedVotes,
+        options
+      );
+      res.send(result);
+})
+
+
+
+
+
+    // Users related api
+    app.post("/allUsers", async (req, res) => {
+      const user = req.body;
+      const result = await userCollection.insertOne(user);
+      res.send(result);
+    });
+    // All user api
+    app.get("/allUsers", async (req, res) => {
+      const result = await userCollection.find().toArray();
+      res.send(result);
+    });
 
     // JWT related API
     app.post("/jwt", async (req, res) => {
