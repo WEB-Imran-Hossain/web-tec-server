@@ -53,6 +53,7 @@ async function run() {
     const featuredCollection = client.db("webtecDb").collection("featured");
     const trendingCollection = client.db("webtecDb").collection("trending");
     const reviewsCollection = client.db("webtecDb").collection("reviews");
+    const allProductsCollection = client.db("webtecDb").collection("allProducts");
     const reportsCollection = client.db("webtecDb").collection("reports");
     const userCollection = client.db("webtecDb").collection("allUsers");
 
@@ -80,6 +81,42 @@ async function run() {
         .send({ clear: true });
     });
 
+// all products related api
+app.get("/allproducts", async (req, res) => {
+  const cursor = allProductsCollection.find().sort({ timestamp: -1 });
+  const result = await cursor.toArray();
+  res.send(result);
+});
+
+app.put("/upVotes/allproducts/:id", async (req, res) => {
+  const id = req.params.id;
+  const filter = { _id: new ObjectId(id) };
+  const options = { upsert: true };
+  const updatedDoc = req.body;
+  const updatedVotes = {
+    $set: {
+      votes: updatedDoc.updatedVoteCount,
+      votedBy: updatedDoc.votedBy,
+    },
+  };
+
+  const result = await allProductsCollection.updateOne(
+    filter,
+    updatedVotes,
+    options
+  );
+  res.send(result);
+});
+
+
+app.get("/allproducts/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: new ObjectId(id) };
+  const result = await allProductsCollection.findOne(query);
+  res.send(result);
+});
+
+
     // Featured api collection get
     app.get("/featured", async (req, res) => {
       const cursor = featuredCollection.find().sort({ timestamp: -1 });
@@ -103,17 +140,6 @@ async function run() {
     app.get("/featured/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
-      const options = {
-        projection: {
-          productImage: 1,
-          productName: 1,
-          tags: 1,
-          timestamp: 1,
-          votes: 1,
-          isOwner: 1,
-        },
-      };
-
       const result = await featuredCollection.findOne(query);
       res.send(result);
     });
