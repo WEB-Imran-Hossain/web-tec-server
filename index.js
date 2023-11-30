@@ -51,6 +51,7 @@ async function run() {
 
     // data collection form server
     const featuredCollection = client.db("webtecDb").collection("featured");
+    const trendingCollection = client.db("webtecDb").collection("trending");
     const reviewsCollection = client.db("webtecDb").collection("reviews");
     const reportsCollection = client.db("webtecDb").collection("reports");
     const userCollection = client.db("webtecDb").collection("allUsers");
@@ -117,8 +118,43 @@ async function run() {
       res.send(result);
     });
 
+    // Trending api collection get
+    app.get("/trending", async (req, res) => {
+      const cursor = trendingCollection.find().sort({ timestamp: -1 });
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    app.get("/trending/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+
+      const result = await trendingCollection.findOne(query);
+      res.send(result);
+    });
+
+    app.put("/upVotes/trending/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updatedDoc = req.body;
+      const updatedVotes = {
+        $set: {
+          votes: updatedDoc.updatedVoteCount,
+          votedBy: updatedDoc.votedBy,
+        },
+      };
+
+      const result = await trendingCollection.updateOne(
+        filter,
+        updatedVotes,
+        options
+      );
+      res.send(result);
+    });
+
     // updated upvoted related api
-    app.put("/upVotes/:id", async (req, res) => {
+    app.put("/upVotes/featured/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const options = { upsert: true };
@@ -150,7 +186,6 @@ async function run() {
       const result = await reviewsCollection.find(reviewData).toArray();
       res.send(result);
     });
-
 
     // report related api
     app.post("/reports", async (req, res) => {
