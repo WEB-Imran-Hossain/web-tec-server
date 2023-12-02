@@ -319,6 +319,13 @@ async function run() {
       );
       res.send(result);
     });
+    // get users indivisul by email
+    app.get("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
+      const result = await userCollection.findOne(filter);
+      res.send(result);
+    });
 
     // JWT related API
     app.post("/jwt", async (req, res) => {
