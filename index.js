@@ -1,9 +1,10 @@
 const express = require("express");
+require("dotenv").config();
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
-require("dotenv").config();
+const stripe = require("stripe")(process.env.STRIP_SK);
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -63,6 +64,23 @@ async function run() {
       .collection("allProducts");
     const reportsCollection = client.db("webtecDb").collection("reports");
     const userCollection = client.db("webtecDb").collection("allUsers");
+
+    // payment related api
+    app.post("/create-payment-intent", async (req, res) => {
+      const { price } = req.body;
+      const amount = parseInt(price * 100);
+      console.log(amount, "amount inside the intent");
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
 
     // JWT related API
     app.post("/jwt", async (req, res) => {
@@ -279,6 +297,26 @@ async function run() {
         return res.send({ message: "user already exists", insertedId: null });
       }
       const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
+
+    // update user subscription
+    app.put("/users", async (req, res) => {
+      const data = req.body;
+      const email = data.email;
+      const status = data.status;
+      const filter = { email: email };
+      const option = { upsert: true };
+      const updateSubscription = {
+        $set: {
+          status: status,
+        },
+      };
+      const result = await usersCollection.updateOne(
+        filter,
+        updateSubscription,
+        option
+      );
       res.send(result);
     });
 
