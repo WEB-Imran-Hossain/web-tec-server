@@ -63,7 +63,6 @@ async function run() {
       .db("webtecDb")
       .collection("allProducts");
     const reportsCollection = client.db("webtecDb").collection("reports");
-    const userCollection = client.db("webtecDb").collection("allUsers");
 
     // payment related api
     app.post("/create-payment-intent", async (req, res) => {
@@ -134,10 +133,26 @@ async function run() {
       }
     });
 
+    // get specific product using email
+    app.get("/allproducts/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { isOwner: email };
+      const result = await allProductsCollection.find(filter).toArray();
+      res.send(result);
+    });
+
     // add new product
     app.post("/allproducts", async (req, res) => {
       const productData = req.body;
       const result = await allProductsCollection.insertOne(productData);
+      res.send(result);
+    });
+
+    // delete a product
+    app.delete("/allproducts/delete/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await allProductsCollection.deleteOne(filter);
       res.send(result);
     });
 
@@ -319,11 +334,32 @@ async function run() {
       );
       res.send(result);
     });
+
+    // update user role
+    app.put("/users/role/update", async (req, res) => {
+      const data = req.body;
+      const id = data.id;
+      const role = data.role;
+      const filter = { _id: new ObjectId(id) };
+      const option = { upsert: true };
+      const updateRole = {
+        $set: {
+          role: role,
+        },
+      };
+      const result = await usersCollection.updateOne(
+        filter,
+        updateRole,
+        option
+      );
+      res.send(result);
+    });
+
     // get users indivisul by email
-    app.get("/users/:email", async (req, res) => {
+    app.get("/users/sub/:email", async (req, res) => {
       const email = req.params.email;
       const filter = { email: email };
-      const result = await userCollection.findOne(filter);
+      const result = await usersCollection.findOne(filter);
       res.send(result);
     });
 
