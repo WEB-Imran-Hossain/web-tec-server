@@ -53,6 +53,7 @@ async function run() {
     const featuredCollection = client.db("webtecDb").collection("featured");
     const trendingCollection = client.db("webtecDb").collection("trending");
     const reviewsCollection = client.db("webtecDb").collection("reviews");
+    const usersCollection = client.db("webtecDb").collection("users");
     const allProductsCollection = client
       .db("webtecDb")
       .collection("allProducts");
@@ -252,15 +253,16 @@ async function run() {
       res.send(result);
     });
 
-    // Users related api
-    app.post("/allUsers", async (req, res) => {
+
+    // post user for database
+    app.post("/users", async (req, res) => {
       const user = req.body;
-      const result = await userCollection.insertOne(user);
-      res.send(result);
-    });
-    // All user api
-    app.get("/allUsers", async (req, res) => {
-      const result = await userCollection.find().toArray();
+      const query = { email: user.email };
+      const existingUser = await usersCollection.findOne(query);
+      if (existingUser) {
+        return res.send({ message: "user already exists", insertedId: null });
+      }
+      const result = await usersCollection.insertOne(user);
       res.send(result);
     });
 
