@@ -10,7 +10,11 @@ const port = process.env.PORT || 5000;
 // middleware
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:4173",
+      "https://web-tech-project.netlify.app",
+    ],
     credentials: true,
   })
 );
@@ -110,6 +114,13 @@ async function run() {
       } catch (error) {
         console.log(error);
       }
+    });
+
+    // add new product
+    app.post("/allproducts", async (req, res) => {
+      const productData = req.body;
+      const result = await allProductsCollection.insertOne(productData);
+      res.send(result);
     });
 
     app.put("/upVotes/allproducts/:id", async (req, res) => {
@@ -253,11 +264,11 @@ async function run() {
       res.send(result);
     });
 
-        // All user api
-        app.get("/users", async (req, res) => {
-          const result = await usersCollection.find().toArray();
-          res.send(result);
-        });
+    // All user api
+    app.get("/users", async (req, res) => {
+      const result = await usersCollection.find().toArray();
+      res.send(result);
+    });
 
     // post user for database
     app.post("/users", async (req, res) => {
@@ -296,10 +307,10 @@ async function run() {
     });
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    // await client.db("admin").command({ ping: 1 });
+    // console.log(
+    //   "Pinged your deployment. You successfully connected to MongoDB!"
+    // );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
