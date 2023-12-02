@@ -253,6 +253,11 @@ async function run() {
       res.send(result);
     });
 
+        // All user api
+        app.get("/users", async (req, res) => {
+          const result = await usersCollection.find().toArray();
+          res.send(result);
+        });
 
     // post user for database
     app.post("/users", async (req, res) => {
