@@ -378,6 +378,14 @@ async function run() {
         })
         .send({ auth: true });
     });
+    // statistic relater api
+    // Create a pie chart to show the total number of products, numbers of reviews, and number of users of the entire site.
+    app.get("/statistic", async (req, res) => {
+      const totalUser = await usersCollection.estimatedDocumentCount();
+      const totalReview = await reviewsCollection.estimatedDocumentCount();
+      const allProducts = await allProductsCollection.estimatedDocumentCount();
+      res.send({ totalUser, totalReview, allProducts});
+    });
 
     // Clear cokkie API
     app.post("/logout", async (req, res) => {
