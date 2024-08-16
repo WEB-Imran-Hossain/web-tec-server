@@ -384,7 +384,7 @@ async function run() {
       const totalUser = await usersCollection.estimatedDocumentCount();
       const totalReview = await reviewsCollection.estimatedDocumentCount();
       const allProducts = await allProductsCollection.estimatedDocumentCount();
-      res.send({ totalUser, totalReview, allProducts});
+      res.send({ totalUser, totalReview, allProducts });
     });
 
     // Clear cokkie API
