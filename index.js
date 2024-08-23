@@ -14,7 +14,7 @@ app.use(
     origin: [
       "http://localhost:5173",
       "http://localhost:4173",
-      "https://web-tech-project.netlify.app",
+      "web-tec-client.netlify.app",
     ],
     credentials: true,
   })
